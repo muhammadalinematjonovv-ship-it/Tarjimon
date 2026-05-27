@@ -104,12 +104,6 @@
 <script>
   let direction = 'uz-ru';
 
-  const SERVERS = [
-    'https://libretranslate.de',
-    'https://translate.argosopentech.com',
-    'https://libretranslate.com'
-  ];
-
   function setLabels() {
     if (direction === 'uz-ru') {
       document.getElementById('from-pill').textContent = "🇺🇿 O'zbek";
@@ -159,7 +153,6 @@
     if (out.querySelector('.placeholder')) return;
     navigator.clipboard.writeText(out.innerText).then(() => {
       document.getElementById('status').textContent = '✓ Nusxalandi!';
-      document.getElementById('status').className = 'status';
       setTimeout(() => document.getElementById('status').textContent = '', 2000);
     });
   }
@@ -170,18 +163,6 @@
     document.getElementById('input-text').value = el.textContent;
     updateChar();
     translate();
-  }
-
-  async function tryTranslate(server, text, source, target) {
-    const res = await fetch(server + '/translate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ q: text, source, target, format: 'text' })
-    });
-    if (!res.ok) throw new Error('Server xatosi');
-    const data = await res.json();
-    if (!data.translatedText) throw new Error('Tarjima topilmadi');
-    return data.translatedText;
   }
 
   async function translate() {
@@ -201,31 +182,21 @@
     statusEl.className = 'status';
     output.innerHTML = '<span class="placeholder">Kutilmoqda...</span>';
 
-    const source = direction === 'uz-ru' ? 'uz' : 'ru';
-    const target = direction === 'uz-ru' ? 'ru' : 'uz';
+    const sl = direction === 'uz-ru' ? 'uz' : 'ru';
+    const tl = direction === 'uz-ru' ? 'ru' : 'uz';
 
-    let result = null;
-    let lastError = '';
-
-    for (const server of SERVERS) {
-      try {
-        result = await tryTranslate(server, text, source, target);
-        break;
-      } catch(e) {
-        lastError = e.message;
-        continue;
-      }
-    }
-
-    if (result) {
+    try {
+      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${encodeURIComponent(text)}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const result = data[0].map(i => i[0]).join('');
       output.textContent = result;
       document.getElementById('out-char').textContent = result.length + ' belgi';
       statusEl.textContent = '✓ Tayyor!';
-      statusEl.className = 'status';
       setTimeout(() => statusEl.textContent = '', 3000);
-    } else {
+    } catch(e) {
       output.innerHTML = '<span class="placeholder">Xato yuz berdi. Qayta urinib ko\'ring.</span>';
-      statusEl.textContent = 'Tarjima xizmati vaqtincha ishlamayapti';
+      statusEl.textContent = 'Ulanishda xato';
       statusEl.className = 'status error';
     }
 
