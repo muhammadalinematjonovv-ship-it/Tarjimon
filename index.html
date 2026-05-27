@@ -26,7 +26,8 @@
     textarea { width: 100%; border: none; outline: none; padding: 14px; font-size: 15px; font-family: inherit; resize: none; min-height: 200px; background: #fff; color: #111; line-height: 1.6; }
     .output { padding: 14px; font-size: 15px; min-height: 200px; line-height: 1.6; color: #111; background: #fafafa; white-space: pre-wrap; word-break: break-word; }
     .placeholder { color: #9ca3af; font-size: 14px; }
-    .char-row { padding: 6px 14px; border-top: 1px solid #f3f4f6; font-size: 12px; color: #9ca3af; text-align: right; }
+    .char-row { padding: 6px 14px; border-top: 1px solid #f3f4f6; font-size: 12px; color: #9ca3af; text-align: right; display: flex; justify-content: space-between; align-items: center; }
+    .typing-indicator { font-size: 12px; color: #4F46E5; }
     .btn-row { margin-top: 12px; display: flex; gap: 10px; }
     .btn-translate { flex: 1; padding: 13px; background: #4F46E5; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
     .btn-translate:hover { background: #4338CA; }
@@ -67,8 +68,11 @@
         <span id="from-label">O'zbek</span>
         <button onclick="clearAll()" title="Tozalash">✕</button>
       </div>
-      <textarea id="input-text" placeholder="Tarjima qilinadigan matnni yozing..." oninput="updateChar()"></textarea>
-      <div class="char-row"><span id="char-count">0</span> belgi</div>
+      <textarea id="input-text" placeholder="Yozing — tarjima avtomatik bo'ladi..."></textarea>
+      <div class="char-row">
+        <span class="typing-indicator" id="typing-indicator"></span>
+        <span id="char-count">0</span> belgi
+      </div>
     </div>
     <div class="panel">
       <div class="panel-head">
@@ -76,7 +80,7 @@
         <button onclick="copyText()" title="Nusxalash">⎘</button>
       </div>
       <div class="output" id="output"><span class="placeholder">Tarjima bu yerda ko'rinadi...</span></div>
-      <div class="char-row" id="out-char"></div>
+      <div class="char-row"><span id="out-char"></span></div>
     </div>
   </div>
 
@@ -103,6 +107,7 @@
 
 <script>
   let direction = 'uz-ru';
+  let autoTimer = null;
 
   function setLabels() {
     if (direction === 'uz-ru') {
@@ -131,21 +136,35 @@
     if (outText.trim()) {
       document.getElementById('input-text').value = outText;
       updateChar();
+      translate();
     }
     outEl.innerHTML = '<span class="placeholder">Tarjima bu yerda ko\'rinadi...</span>';
     document.getElementById('out-char').textContent = '';
   }
 
   function updateChar() {
-    document.getElementById('char-count').textContent = document.getElementById('input-text').value.length;
+    const len = document.getElementById('input-text').value.length;
+    document.getElementById('char-count').textContent = len;
+
+    clearTimeout(autoTimer);
+    if (len > 2) {
+      document.getElementById('typing-indicator').textContent = 'Tarjima qilinmoqda...';
+      autoTimer = setTimeout(() => {
+        translate();
+      }, 800);
+    } else {
+      document.getElementById('typing-indicator').textContent = '';
+    }
   }
 
   function clearAll() {
+    clearTimeout(autoTimer);
     document.getElementById('input-text').value = '';
     document.getElementById('char-count').textContent = '0';
     document.getElementById('output').innerHTML = '<span class="placeholder">Tarjima bu yerda ko\'rinadi...</span>';
     document.getElementById('out-char').textContent = '';
     document.getElementById('status').textContent = '';
+    document.getElementById('typing-indicator').textContent = '';
   }
 
   function copyText() {
@@ -162,25 +181,19 @@
     setLabels();
     document.getElementById('input-text').value = el.textContent;
     updateChar();
-    translate();
   }
 
   async function translate() {
     const text = document.getElementById('input-text').value.trim();
-    if (!text) {
-      document.getElementById('status').textContent = 'Iltimos matn kiriting';
-      return;
-    }
+    if (!text) return;
 
     const btn = document.getElementById('translate-btn');
     const statusEl = document.getElementById('status');
     const output = document.getElementById('output');
 
     btn.disabled = true;
-    btn.textContent = 'Tarjima qilinmoqda...';
     statusEl.textContent = '';
-    statusEl.className = 'status';
-    output.innerHTML = '<span class="placeholder">Kutilmoqda...</span>';
+    output.innerHTML = '<span class="placeholder">Tarjima qilinmoqda...</span>';
 
     const sl = direction === 'uz-ru' ? 'uz' : 'ru';
     const tl = direction === 'uz-ru' ? 'ru' : 'uz';
@@ -195,16 +208,15 @@
       if (!data.result) throw new Error('Natija yoq');
       output.textContent = data.result;
       document.getElementById('out-char').textContent = data.result.length + ' belgi';
-      statusEl.textContent = '✓ Tayyor!';
-      setTimeout(() => statusEl.textContent = '', 3000);
+      document.getElementById('typing-indicator').textContent = '';
+      statusEl.textContent = '';
     } catch(e) {
-      output.innerHTML = '<span class="placeholder">Xato yuz berdi. Qayta urinib ko\'ring.</span>';
+      output.innerHTML = '<span class="placeholder">Xato yuz berdi.</span>';
       statusEl.textContent = 'Ulanishda xato';
       statusEl.className = 'status error';
     }
 
     btn.disabled = false;
-    btn.textContent = '✦ Tarjima qilish';
   }
 </script>
 </body>
