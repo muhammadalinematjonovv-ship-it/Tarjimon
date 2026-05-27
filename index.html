@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tarjimon — O'zbek & Rus</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; min-height: 100vh; display: flex; flex-direction: column; }
+    header { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 14px 24px; display: flex; align-items: center; gap: 10px; }
+    .logo { width: 34px; height: 34px; background: #4F46E5; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; }
+    header h1 { font-size: 17px; font-weight: 600; color: #111; }
+    .badge { display: inline-block; font-size: 11px; background: #EEF2FF; color: #4F46E5; padding: 2px 8px; border-radius: 20px; margin-left: 6px; font-weight: 500; }
+    main { flex: 1; max-width: 920px; width: 100%; margin: 32px auto; padding: 0 16px; }
+    .lang-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .lang-pill { flex: 1; text-align: center; padding: 10px; border-radius: 8px; border: 1.5px solid #e5e7eb; font-size: 14px; font-weight: 600; color: #6b7280; cursor: pointer; background: #fff; transition: all 0.15s; user-select: none; }
+    .lang-pill.active { border-color: #4F46E5; background: #EEF2FF; color: #4F46E5; }
+    .swap { width: 38px; height: 38px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #6b7280; transition: background 0.15s; flex-shrink: 0; }
+    .swap:hover { background: #f3f4f6; }
+    .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
+    .panel-head { padding: 10px 14px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
+    .panel-head span { font-size: 13px; font-weight: 600; color: #374151; }
+    .panel-head button { background: none; border: none; cursor: pointer; font-size: 15px; color: #9ca3af; padding: 2px 6px; border-radius: 4px; }
+    .panel-head button:hover { background: #f3f4f6; color: #374151; }
+    textarea { width: 100%; border: none; outline: none; padding: 14px; font-size: 15px; font-family: inherit; resize: none; min-height: 200px; background: #fff; color: #111; line-height: 1.6; }
+    .output { padding: 14px; font-size: 15px; min-height: 200px; line-height: 1.6; color: #111; background: #fafafa; white-space: pre-wrap; word-break: break-word; }
+    .placeholder { color: #9ca3af; font-size: 14px; }
+    .char-row { padding: 6px 14px; border-top: 1px solid #f3f4f6; font-size: 12px; color: #9ca3af; text-align: right; }
+    .btn-row { margin-top: 12px; display: flex; gap: 10px; }
+    .btn-translate { flex: 1; padding: 13px; background: #4F46E5; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+    .btn-translate:hover { background: #4338CA; }
+    .btn-translate:disabled { background: #a5b4fc; cursor: not-allowed; }
+    .btn-clear { padding: 13px 18px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 14px; color: #6b7280; cursor: pointer; }
+    .btn-clear:hover { background: #f9fafb; }
+    .status { text-align: center; font-size: 13px; color: #6b7280; margin-top: 10px; min-height: 20px; }
+    .examples { margin-top: 28px; }
+    .examples h3 { font-size: 13px; color: #6b7280; margin-bottom: 10px; font-weight: 500; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { padding: 7px 14px; border: 1px solid #e5e7eb; border-radius: 20px; font-size: 13px; color: #374151; background: #fff; cursor: pointer; transition: all 0.15s; }
+    .chip:hover { border-color: #4F46E5; background: #EEF2FF; color: #4F46E5; }
+    footer { text-align: center; padding: 20px; font-size: 13px; color: #9ca3af; }
+    @media (max-width: 600px) {
+      .panels { grid-template-columns: 1fr; }
+      main { margin: 16px auto; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">T</div>
+  <h1>Tarjimon <span class="badge">Bepul</span></h1>
+</header>
+
+<main>
+  <div class="lang-bar">
+    <div class="lang-pill active" id="from-pill">🇺🇿 O'zbek</div>
+    <button class="swap" onclick="swapLangs()" title="Almashtirish">⇄</button>
+    <div class="lang-pill" id="to-pill">🇷🇺 Rus</div>
+  </div>
+
+  <div class="panels">
+    <div class="panel">
+      <div class="panel-head">
+        <span id="from-label">O'zbek</span>
+        <button onclick="clearAll()" title="Tozalash">✕</button>
+      </div>
+      <textarea id="input-text" placeholder="Tarjima qilinadigan matnni yozing..." oninput="updateChar()"></textarea>
+      <div class="char-row"><span id="char-count">0</span> belgi</div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <span id="to-label">Rus</span>
+        <button onclick="copyText()" title="Nusxalash">⎘</button>
+      </div>
+      <div class="output" id="output"><span class="placeholder">Tarjima bu yerda ko'rinadi...</span></div>
+      <div class="char-row" id="out-char"></div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-clear" onclick="clearAll()">Tozalash</button>
+    <button class="btn-translate" id="translate-btn" onclick="translate()">✦ Tarjima qilish</button>
+  </div>
+  <div class="status" id="status"></div>
+
+  <div class="examples">
+    <h3>Tezkor misollar:</h3>
+    <div class="chips">
+      <button class="chip" onclick="useExample(this)">Salom, qalaysiz?</button>
+      <button class="chip" onclick="useExample(this)">Narx qancha?</button>
+      <button class="chip" onclick="useExample(this)">Buyurtma bermoqchiman</button>
+      <button class="chip" onclick="useExample(this)">Mahsulot qachon yetib keladi?</button>
+      <button class="chip" onclick="useExample(this)">Chegirma bormi?</button>
+      <button class="chip" onclick="useExample(this)">Rahmat, yaxshi kun!</button>
+    </div>
+  </div>
+</main>
+
+<footer>Tarjimon · O'zbek ↔ Rus · 2026</footer>
+
+<script>
+  let direction = 'uz-ru';
+
+  function setLabels() {
+    if (direction === 'uz-ru') {
+      document.getElementById('from-pill').textContent = "🇺🇿 O'zbek";
+      document.getElementById('to-pill').textContent = '🇷🇺 Rus';
+      document.getElementById('from-label').textContent = "O'zbek";
+      document.getElementById('to-label').textContent = 'Rus';
+      document.getElementById('from-pill').classList.add('active');
+      document.getElementById('to-pill').classList.remove('active');
+    } else {
+      document.getElementById('from-pill').textContent = '🇷🇺 Rus';
+      document.getElementById('to-pill').textContent = "🇺🇿 O'zbek";
+      document.getElementById('from-label').textContent = 'Rus';
+      document.getElementById('to-label').textContent = "O'zbek";
+      document.getElementById('from-pill').classList.remove('active');
+      document.getElementById('to-pill').classList.add('active');
+    }
+  }
+
+  function swapLangs() {
+    const outEl = document.getElementById('output');
+    const hasResult = !outEl.querySelector('.placeholder');
+    const outText = hasResult ? outEl.innerText : '';
+    direction = direction === 'uz-ru' ? 'ru-uz' : 'uz-ru';
+    setLabels();
+    if (outText.trim()) {
+      document.getElementById('input-text').value = outText;
+      updateChar();
+    }
+    outEl.innerHTML = '<span class="placeholder">Tarjima bu yerda ko\'rinadi...</span>';
+    document.getElementById('out-char').textContent = '';
+  }
+
+  function updateChar() {
+    document.getElementById('char-count').textContent = document.getElementById('input-text').value.length;
+  }
+
+  function clearAll() {
+    document.getElementById('input-text').value = '';
+    document.getElementById('char-count').textContent = '0';
+    document.getElementById('output').innerHTML = '<span class="placeholder">Tarjima bu yerda ko\'rinadi...</span>';
+    document.getElementById('out-char').textContent = '';
+    document.getElementById('status').textContent = '';
+  }
+
+  function copyText() {
+    const out = document.getElementById('output');
+    if (out.querySelector('.placeholder')) return;
+    navigator.clipboard.writeText(out.innerText).then(() => {
+      document.getElementById('status').textContent = '✓ Nusxalandi!';
+      setTimeout(() => document.getElementById('status').textContent = '', 2000);
+    });
+  }
+
+  function useExample(el) {
+    direction = 'uz-ru';
+    setLabels();
+    document.getElementById('input-text').value = el.textContent;
+    updateChar();
+    translate();
+  }
+
+  async function translate() {
+    const text = document.getElementById('input-text').value.trim();
+    if (!text) { document.getElementById('status').textContent = 'Iltimos matn kiriting'; return; }
+
+    const btn = document.getElementById('translate-btn');
+    const status = document.getElementById('status');
+    const output = document.getElementById('output');
+
+    btn.disabled = true;
+    btn.textContent = 'Tarjima qilinmoqda...';
+    status.textContent = '';
+    output.innerHTML = '<span class="placeholder">Kutilmoqda...</span>';
+
+    const langPair = direction === 'uz-ru' ? 'uz|ru' : 'ru|uz';
+
+    try {
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${langPair}`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (data.responseStatus !== 200) throw new Error('Tarjima xatosi');
+
+      const result = data.responseData.translatedText;
+      output.textContent = result;
+      document.getElementById('out-char').textContent = result.length + ' belgi';
+      status.textContent = '✓ Tayyor!';
+      setTimeout(() => status.textContent = '', 3000);
+    } catch(e) {
+      output.innerHTML = '<span class="placeholder">Xato yuz berdi. Internet aloqasini tekshiring.</span>';
+      status.textContent = 'Ulanishda xato';
+    }
+
+    btn.disabled = false;
+    btn.textContent = '✦ Tarjima qilish';
+  }
+</script>
+</body>
+</html>
